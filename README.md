@@ -71,6 +71,8 @@ Necesitas claves de API (API Keys) para:
 - `src/utils/auth.ts`: Ayudantes de Autenticación PKCE (Generación de Verifier/Challenge).
 - `src/utils/moodMap.ts`: Lógica de mapeo de condiciones climáticas a géneros.
 - `src/components/ui/GlassCard.tsx`: Componente de UI reutilizable con efecto de vidrio.
+- `src/components/ui/Footer.tsx`: Pie de página responsive con efectos visuales y enlaces sociales.
+- `src/components/ui/AuroraBackground.tsx`: Fondo animado con efecto Aurora Borealis.
 
 ## 🤝 Contribuciones
 
