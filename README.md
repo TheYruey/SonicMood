@@ -1,73 +1,81 @@
-# React + TypeScript + Vite
+# 🎵 SonicMood
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+SonicMood es una **aplicación de descubrimiento musical basada en el clima**, construida con React, TypeScript y Vite. Conecta la "vibra" atmosférica de tu ubicación actual (o de cualquier ciudad del mundo) con la biblioteca de Spotify para generar la playlist perfecta para el momento.
 
-Currently, two official plugins are available:
+![SonicMood Banner](public/banner-placeholder.png) 
+*(Nota: ¡Añade una captura de pantalla aquí!)*
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## ✨ Características
 
-## React Compiler
+- **Sol & Lluvia, Ritmo y Beat**: Obtiene automáticamente el clima local usando OpenWeatherMap y lo mapea a géneros musicales específicos (ej: *Lluvia + Noche = Jazz/Piano*, *Despejado + Día = Pop/Upbeat*).
+- **Modo Teletransporte (Búsqueda)**: ¿No te gusta el clima de donde estás? Escribe el nombre de cualquier ciudad (ej: "Tokyo", "Paris") para experimentar la vibra de otro lugar.
+- **Integración Fluida con Spotify**:
+  - Flujo de autenticación **PKCE** seguro (sin exponer secretos del cliente).
+  - Busca canciones relevantes usando la API de Spotify.
+  - **Guardar en Biblioteca**: Crea una nueva playlist directamente en tu cuenta de Spotify con un solo clic.
+- **Estado Persistente**: Tu sesión, datos del clima y canciones generadas sobreviven a recargas de página gracias a la persistencia en local storage.
+- **Interfaz Hermosa**: Sistema de diseño "Glassmorphism" (vidrio esmerilado) usando Tailwind CSS.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🛠️ Stack Tecnológico
 
-## Expanding the ESLint configuration
+- **Frontend**: React 18, TypeScript, Vite
+- **Estilos**: Tailwind CSS (compatible v4), Headless UI
+- **Gestión de Estado**: Zustand (con Middleware de Persistencia)
+- **Iconos**: Phosphor React
+- **APIs**: 
+  - [Spotify Web API](https://developer.spotify.com/) (Auth & Search)
+  - [OpenWeatherMap API](https://openweathermap.org/) (Datos del clima)
+  - Browser Geolocation API
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🚀 Comenzando
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Prerrequisitos
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+Necesitas claves de API (API Keys) para:
+1.  **[Spotify Developer Dashboard](https://developer.spotify.com/)**: Crea una app y configura la "Redirect URI" a `http://localhost:5173/`.
+2.  **[OpenWeatherMap](https://openweathermap.org/)**: Regístrate para obtener una clave gratuita.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### Instalación
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+1.  Clona el repositorio:
+    ```bash
+    git clone https://github.com/TheYruey/SonicMood.git
+    cd SonicMood
+    ```
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+2.  Instala las dependencias:
+    ```bash
+    npm install
+    ```
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+3.  Configura las Variables de Entorno:
+    Crea un archivo `.env` en el directorio raíz (basado en `.env.example` si existe) y añade:
+
+    ```env
+    VITE_SPOTIFY_CLIENT_ID=tu_cliente_id_de_spotify_aqui
+    VITE_WEATHER_API_KEY=tu_api_key_de_openweathermap_aqui
+    VITE_SPOTIFY_REDIRECT_URI=http://localhost:5173/
+    ```
+
+    > **Nota de Seguridad:** Nunca subas tu archivo `.env` al control de versiones. Ya está añadido en `.gitignore` por defecto.
+
+4.  Ejecuta el servidor de desarrollo:
+    ```bash
+    npm run dev
+    ```
+
+## 📂 Estructura del Proyecto
+
+- `src/services/api.ts`: Maneja todas las llamadas a API (Spotify y Clima). Incluye la lógica de "Fallback de API de Búsqueda" para evitar endpoints obsoletos.
+- `src/store/useStore.ts`: Gestión de estado global con Zustand.
+- `src/utils/auth.ts`: Ayudantes de Autenticación PKCE (Generación de Verifier/Challenge).
+- `src/utils/moodMap.ts`: Lógica de mapeo de condiciones climáticas a géneros.
+- `src/components/ui/GlassCard.tsx`: Componente de UI reutilizable con efecto de vidrio.
+
+## 🤝 Contribuciones
+
+¡Las contribuciones son bienvenidas! Siéntete libre de enviar un Pull Request.
+
+## 📄 Licencia
+
+Este proyecto es open source y está disponible bajo la [Licencia MIT](LICENSE).
