@@ -9,3 +9,13 @@ export interface UserProfile {
     display_name: string
     images: { url: string }[]
 }
+
+export interface Track {
+    id: string
+    name: string
+    artists: { name: string }[]
+    album: {
+        images: { url: string }[]
+    }
+    uri: string
+}
