@@ -14,15 +14,29 @@ interface StoreState {
     setLoading: (loading: boolean) => void
 }
 
-export const useStore = create<StoreState>((set) => ({
-    user: null,
-    weather: null,
-    token: null,
-    tracks: null,
-    isLoading: false,
-    setUser: (user) => set({ user }),
-    setWeather: (weather) => set({ weather }),
-    setToken: (token) => set({ token }),
-    setTracks: (tracks) => set({ tracks }),
-    setLoading: (isLoading) => set({ isLoading }),
-}))
+import { persist } from 'zustand/middleware'
+
+export const useStore = create<StoreState>()(
+    persist(
+        (set) => ({
+            user: null,
+            weather: null,
+            token: null,
+            tracks: null,
+            isLoading: false,
+            setUser: (user) => set({ user }),
+            setWeather: (weather) => set({ weather }),
+            setToken: (token) => set({ token }),
+            setTracks: (tracks) => set({ tracks }),
+            setLoading: (isLoading) => set({ isLoading }),
+        }),
+        {
+            name: 'sonicmood-storage',
+            partialize: (state) => ({
+                token: state.token,
+                weather: state.weather,
+                tracks: state.tracks
+            })
+        }
+    )
+)
