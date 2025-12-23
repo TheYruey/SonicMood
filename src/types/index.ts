@@ -2,6 +2,8 @@ export interface WeatherData {
     temperature: number
     condition: string
     city: string
+    country?: string
+    iconCode?: string
     isDay: boolean
 }
 

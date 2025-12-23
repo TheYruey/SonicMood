@@ -31,6 +31,39 @@ export const getWeatherByCity = async (city: string) => {
     return response.data
 }
 
+export const searchCitiesWithWeather = async (query: string) => {
+    // 1. Fetch Locations from Geo API
+    const geoResponse = await axios.get(`http://api.openweathermap.org/geo/1.0/direct`, {
+        params: {
+            q: query,
+            limit: 5,
+            appid: import.meta.env.VITE_WEATHER_API_KEY
+        }
+    });
+
+    const locations = geoResponse.data;
+
+    // 2. Fetch Weather for Each Location
+    const results = await Promise.all(locations.map(async (loc: any) => {
+        try {
+            const weather = await getWeather(loc.lat, loc.lon);
+            return {
+                name: loc.name,
+                country: loc.country,
+                lat: loc.lat,
+                lon: loc.lon,
+                temp: weather.main.temp,
+                iconCode: weather.weather[0].icon
+            };
+        } catch (e) {
+            return null;
+        }
+    }));
+
+    // Filter out failed requests
+    return results.filter(item => item !== null);
+}
+
 export const getRecommendations = async (seed_genres: string, token: string) => {
     if (!token) {
         throw new Error("No token provided");

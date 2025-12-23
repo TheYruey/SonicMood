@@ -1,11 +1,12 @@
 import { useRef, useEffect, useState } from 'react'
 import { GlassCard } from './components/ui/GlassCard'
 import { useStore } from './store/useStore'
-import { getWeather, getWeatherByCity, getRecommendations, getCurrentUserProfile, createPlaylist, addTracksToPlaylist } from './services/api'
+import { getWeather, getWeatherByCity, getRecommendations, getCurrentUserProfile, createPlaylist, addTracksToPlaylist, searchCitiesWithWeather } from './services/api'
 import { redirectToAuthCodeFlow, getAccessToken } from './utils/auth'
 import { AuroraBackground } from './components/ui/AuroraBackground'
 import { getGenresByWeather } from './utils/moodMap'
-import { SpotifyLogo, MusicNotes, Playlist, MagnifyingGlass, PlayCircle, CloudFog, SignOut } from 'phosphor-react'
+import { getWeatherEmoji } from './utils/iconHelpers'
+import { SpotifyLogo, MusicNotes, Playlist, MagnifyingGlass, PlayCircle, CloudFog, SignOut, X } from 'phosphor-react'
 
 // Load clientId from environment variables for security
 const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
@@ -18,6 +19,11 @@ function App() {
   const { weather, token, setToken, setWeather, setTracks, setLoading, isLoading, tracks, logout } = useStore()
   const effectRan = useRef(false)
   const [cityInput, setCityInput] = useState("")
+  const [suggestions, setSuggestions] = useState<any[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const isSelecting = useRef(false)
+
+
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -42,6 +48,70 @@ function App() {
     }
   }, [setToken, token])
 
+  // Debounce Search Logic
+  // Debounce Search Logic
+  useEffect(() => {
+    // If input change is due to selection, don't search
+    if (isSelecting.current) {
+      isSelecting.current = false;
+      return;
+    }
+
+    const delayDebounceFn = setTimeout(async () => {
+      if (cityInput.length > 2) {
+        try {
+          const results = await searchCitiesWithWeather(cityInput);
+          setSuggestions(results);
+          setShowSuggestions(true);
+        } catch (error) {
+          console.error("Auto-search failed", error);
+        }
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [cityInput]);
+
+  const handleSelectSuggestion = async (data: any) => {
+    isSelecting.current = true;
+    setCityInput(`${data.name}, ${data.country}`);
+    setSuggestions([]);
+    setShowSuggestions(false);
+
+    setLoading(true);
+    try {
+      // 1. Get Weather directly from coordinates
+      const weatherData = await getWeather(data.lat, data.lon);
+      const condition = weatherData.weather[0].main;
+      const isDay = weatherData.dt > weatherData.sys.sunrise && weatherData.dt < weatherData.sys.sunset;
+
+      setWeather({
+        temperature: weatherData.main.temp,
+        condition: condition,
+        city: data.name,
+        country: data.country,
+        iconCode: data.iconCode,
+        isDay: isDay
+      });
+
+      // 2. Determine Mood
+      const seedGenres = getGenresByWeather(condition, isDay ? 'day' : 'night');
+
+      // 3. Get Recommendations
+      const recTracks = await getRecommendations(seedGenres, token || "");
+      setTracks(recTracks);
+
+    } catch (error) {
+      console.error("Error selecting city:", error);
+      alert("Failed to load weather data.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const handleLogin = () => {
     redirectToAuthCodeFlow(clientId);
   }
@@ -60,6 +130,8 @@ function App() {
         temperature: weatherData.main.temp,
         condition: condition,
         city: weatherData.name,
+        country: weatherData.sys.country,
+        iconCode: weatherData.weather[0].icon,
         isDay: isDay
       })
 
@@ -111,8 +183,12 @@ function App() {
           temperature: weatherData.main.temp,
           condition: condition,
           city: weatherData.name,
+          country: weatherData.sys.country,
+          iconCode: weatherData.weather[0].icon,
           isDay: isDay
         })
+
+        setCityInput('') // Clear search input when syncing GPS
 
         // 2. Determine Mood
         const seedGenres = getGenresByWeather(condition, isDay ? 'day' : 'night')
@@ -200,7 +276,7 @@ function App() {
       ) : (
         // Dashboard View
         <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-8 relative">
-          <GlassCard className="col-span-1 md:col-span-2 text-center relative">
+          <GlassCard className="col-span-1 md:col-span-2 text-center relative z-50 overflow-visible">
             <div className="absolute top-6 right-6 z-10">
               <button
                 onClick={handleLogout}
@@ -225,24 +301,67 @@ function App() {
 
             <div className="flex flex-col items-center gap-4">
               {/* Search Bar */}
-              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 shadow-xl rounded-full px-5 py-3 w-full max-w-md hover:bg-white/15 transition-all">
-                <input
-                  type="text"
-                  placeholder="Or type a city (e.g. Tokyo)..."
-                  className="bg-transparent border-none outline-none text-white placeholder-blue-200/70 flex-1 font-medium"
-                  value={cityInput}
-                  onChange={(e) => setCityInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  disabled={isLoading}
-                />
-                <button
-                  onClick={handleManualSearch}
-                  disabled={isLoading || !cityInput.trim()}
-                  className="text-white hover:text-green-300 transition-colors disabled:opacity-50"
-                >
-                  <MagnifyingGlass size={22} weight="bold" />
-                </button>
+              {/* Search Bar Wrapper */}
+              <div className="relative z-50 w-full max-w-md mx-auto">
+                <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 shadow-xl rounded-full px-5 py-3 w-full hover:bg-white/15 transition-all relative">
+                  <input
+                    type="text"
+                    placeholder="Or type a city (e.g. Tokyo)..."
+                    className="bg-transparent border-none outline-none text-white placeholder-blue-200/70 flex-1 font-medium pr-24"
+                    value={cityInput}
+                    onChange={(e) => {
+                      setCityInput(e.target.value);
+                    }}
+                    onKeyDown={handleKeyDown}
+                    disabled={isLoading}
+                  />
+                  <div className="absolute right-12 top-1/2 -translate-y-1/2 flex items-center">
+                    {cityInput && (
+                      <button
+                        onClick={() => {
+                          setCityInput('');
+                          setSuggestions([]);
+                        }}
+                        className="p-1 text-white/50 hover:text-white transition-colors"
+                      >
+                        <X size={16} weight="bold" />
+                      </button>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={handleManualSearch}
+                    disabled={isLoading || !cityInput.trim()}
+                    className="text-white hover:text-green-300 transition-colors disabled:opacity-50"
+                  >
+                    <MagnifyingGlass size={22} weight="bold" />
+                  </button>
+                </div>
+
+                {/* Smart Suggestions Dropdown */}
+                {showSuggestions && suggestions.length > 0 && (
+                  <div className="absolute top-full left-0 w-full mt-2 z-[100] bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                    {suggestions.map((item, index) => (
+                      <div
+                        key={`${item.lat}-${item.lon}-${index}`}
+                        onClick={() => handleSelectSuggestion(item)}
+                        className="p-3 cursor-pointer hover:bg-white/10 transition-colors flex items-center justify-between text-white group"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium group-hover:text-green-300 transition-colors">{item.name}</span>
+                          <img src={`https://flagcdn.com/w20/${item.country.toLowerCase()}.png`} alt={item.country} className="w-5 h-auto rounded-sm object-cover" />
+                        </div>
+                        <span className="flex items-center gap-2">
+                          <span className="text-gray-300 text-sm font-light">{Math.round(item.temp)}°C</span>
+                          <span className="text-xl filter drop-shadow-md">{getWeatherEmoji(item.iconCode)}</span>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
+
+              <div className="relative w-full max-w-md"></div>
 
               <div className="text-gray-400 text-sm">- or -</div>
 
@@ -262,24 +381,60 @@ function App() {
           </GlassCard>
 
           {weather && (
-            <GlassCard className="col-span-1 md:col-span-2">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="text-2xl font-bold">{weather.city}</h2>
-                  <div className="text-4xl font-light">{Math.round(weather.temperature)}°C</div>
+            <GlassCard className="col-span-1 md:col-span-2 relative z-0">
+
+              <div className="flex flex-col md:flex-row items-end md:items-center justify-between gap-6 mb-8">
+                {/* Left: Location & Date */}
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm font-medium text-purple-300 tracking-wider uppercase">Current Vibe</span>
+                  </div>
+                  <h2 className="text-4xl font-bold text-white leading-tight flex items-center gap-3">
+                    {weather.city}, <span className="text-white/50">{weather.country}</span>
+                    {weather.country && (
+                      <img
+                        src={`https://flagcdn.com/w40/${weather.country.toLowerCase()}.png`}
+                        alt={weather.country}
+                        className="h-6 w-auto rounded shadow-sm"
+                      />
+                    )}
+                  </h2>
+                  <p className="text-white/60 mt-1">
+                    {new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' })}
+                  </p>
                 </div>
-                <div className="text-right flex flex-col items-end gap-2">
-                  <div className="text-xl capitalize">{weather.condition}</div>
-                  {tracks && (
-                    <button
-                      onClick={handleSavePlaylist}
-                      className="text-xs bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-full flex items-center gap-1 transition-colors"
-                    >
-                      <Playlist size={16} weight="bold" />
-                      Save to Spotify
-                    </button>
-                  )}
+
+                {/* Center/Right: Weather Stats */}
+                <div className="flex items-center gap-6">
+                  <div className="text-right">
+                    <div className="text-5xl font-light text-white tracking-tighter">
+                      {Math.round(weather.temperature)}°
+                    </div>
+                    <div className="text-purple-200 capitalize font-medium">
+                      {weather.condition}
+                    </div>
+                  </div>
+
+                  {/* Weather Icon (Dynamic based on condition if possible, or generic) */}
+                  <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md border border-white/20 shadow-inner">
+                    <span className="text-4xl filter drop-shadow-md">
+                      {getWeatherEmoji(weather.iconCode || '01d')}
+                    </span>
+                  </div>
                 </div>
+              </div>
+
+              {/* Actions Bar (Save / Clear) */}
+              <div className="flex items-center justify-end border-t border-white/10 pt-6">
+                {tracks && (
+                  <button
+                    onClick={handleSavePlaylist}
+                    className="text-xs bg-[#1DB954] hover:bg-[#1ed760] text-white px-4 py-2 rounded-full font-bold transition-all shadow-lg shadow-green-900/20 flex items-center gap-2"
+                  >
+                    <Playlist size={18} weight="bold" />
+                    Save Playlist
+                  </button>
+                )}
               </div>
 
               {tracks && (
