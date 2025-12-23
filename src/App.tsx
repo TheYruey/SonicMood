@@ -243,7 +243,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 md:p-8">
       <AuroraBackground />
 
       {!token ? (
@@ -255,7 +255,7 @@ function App() {
             <div className="space-y-4">
               <div className="flex items-center justify-center gap-3">
                 <CloudFog size={40} weight="duotone" className="text-purple-400 drop-shadow-[0_0_10px_rgba(168,85,247,0.5)]" />
-                <h1 className="text-5xl font-extrabold tracking-tight text-white drop-shadow-sm">
+                <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white drop-shadow-sm">
                   SonicMood
                 </h1>
               </div>
@@ -277,7 +277,7 @@ function App() {
         // Dashboard View
         <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-8 relative">
           <GlassCard className="col-span-1 md:col-span-2 text-center relative z-50 overflow-visible">
-            <div className="absolute top-6 right-6 z-10">
+            <div className="absolute top-0 right-0 z-50">
               <button
                 onClick={handleLogout}
                 className="text-white/70 hover:text-red-400 hover:bg-white/10 p-2 rounded-full transition-all"
@@ -299,10 +299,10 @@ function App() {
               </p>
             </div>
 
-            <div className="flex flex-col items-center gap-4">
+            <div className="flex flex-col items-center gap-4 w-full">
               {/* Search Bar */}
               {/* Search Bar Wrapper */}
-              <div className="relative z-50 w-full max-w-md mx-auto">
+              <div className="relative z-50 w-full max-w-2xl mx-auto">
                 <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 shadow-xl rounded-full px-5 py-3 w-full hover:bg-white/15 transition-all relative">
                   <input
                     type="text"
@@ -332,7 +332,7 @@ function App() {
                   <button
                     onClick={handleManualSearch}
                     disabled={isLoading || !cityInput.trim()}
-                    className="text-white hover:text-green-300 transition-colors disabled:opacity-50"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-white/60 text-xl pointer-events-none"
                   >
                     <MagnifyingGlass size={22} weight="bold" />
                   </button>
@@ -363,12 +363,12 @@ function App() {
 
               <div className="relative w-full max-w-md"></div>
 
-              <div className="text-gray-400 text-sm">- or -</div>
+              <span className="text-white/50 text-sm py-1">- or -</span>
 
               <button
                 onClick={handleSync}
                 disabled={isLoading}
-                className="bg-white/10 hover:bg-white/20 border border-white/20 text-white px-8 py-3 rounded-full font-medium transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
+                className="bg-white/10 hover:bg-white/20 border border-white/20 text-white px-8 py-3 rounded-full font-medium transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mx-auto w-full md:w-auto whitespace-nowrap"
               >
                 {isLoading ? (
                   <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
@@ -383,7 +383,7 @@ function App() {
           {weather && (
             <GlassCard className="col-span-1 md:col-span-2 relative z-0">
 
-              <div className="flex flex-col md:flex-row items-end md:items-center justify-between gap-6 mb-8">
+              <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 mb-8">
                 {/* Left: Location & Date */}
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
@@ -425,11 +425,11 @@ function App() {
               </div>
 
               {/* Actions Bar (Save / Clear) */}
-              <div className="flex items-center justify-end border-t border-white/10 pt-6">
+              <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 md:gap-6 mt-6 md:mt-0">
                 {tracks && (
                   <button
                     onClick={handleSavePlaylist}
-                    className="text-xs bg-[#1DB954] hover:bg-[#1ed760] text-white px-4 py-2 rounded-full font-bold transition-all shadow-lg shadow-green-900/20 flex items-center gap-2"
+                    className="text-xs bg-[#1DB954] hover:bg-[#1ed760] text-white px-4 py-2 rounded-full font-bold transition-all shadow-lg shadow-green-900/20 flex items-center justify-center gap-2 w-full md:w-auto"
                   >
                     <Playlist size={18} weight="bold" />
                     Save Playlist
@@ -438,7 +438,7 @@ function App() {
               </div>
 
               {tracks && (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mt-8">
                   {tracks.map(track => (
                     <div key={track.id} className="group relative flex flex-col cursor-pointer" onClick={() => window.open(track.uri, '_blank')}>
                       <div className="relative aspect-square overflow-hidden rounded-xl shadow-lg mb-3">
