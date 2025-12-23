@@ -12,6 +12,7 @@ interface StoreState {
     setToken: (token: string | null) => void
     setTracks: (tracks: Track[] | null) => void
     setLoading: (loading: boolean) => void
+    logout: () => void
 }
 
 import { persist } from 'zustand/middleware'
@@ -29,6 +30,13 @@ export const useStore = create<StoreState>()(
             setToken: (token) => set({ token }),
             setTracks: (tracks) => set({ tracks }),
             setLoading: (isLoading) => set({ isLoading }),
+            logout: () => set({
+                user: null,
+                weather: null,
+                token: null,
+                tracks: null,
+                isLoading: false
+            }),
         }),
         {
             name: 'sonicmood-storage',

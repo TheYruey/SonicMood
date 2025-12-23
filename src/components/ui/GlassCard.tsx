@@ -17,12 +17,12 @@ export const GlassCard = ({ className, children, ...props }: GlassCardProps) => 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className={cn(
-                "bg-glass backdrop-blur-lg border border-glassBorder rounded-xl p-6 shadow-xl",
+                "bg-white/5 backdrop-blur-2xl border border-white/10 rounded-2xl p-8 shadow-2xl shadow-black/20",
                 className
             )}
             {...props}
         >
             {children}
-        </motion.div>
+        </motion.div >
     )
 }

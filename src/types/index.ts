@@ -2,6 +2,7 @@ export interface WeatherData {
     temperature: number
     condition: string
     city: string
+    isDay: boolean
 }
 
 export interface UserProfile {
