@@ -2,8 +2,7 @@
 
 SonicMood es una **aplicación de descubrimiento musical basada en el clima**, construida con React, TypeScript y Vite. Conecta la "vibra" atmosférica de tu ubicación actual (o de cualquier ciudad del mundo) con la biblioteca de Spotify para generar la playlist perfecta para el momento.
 
-![SonicMood Banner](public/banner-placeholder.png) 
-*(Nota: ¡Añade una captura de pantalla aquí!)*
+![SonicMood Banner](public/banner.png)
 
 ## ✨ Características
 
@@ -14,7 +13,9 @@ SonicMood es una **aplicación de descubrimiento musical basada en el clima**, c
   - Busca canciones relevantes usando la API de Spotify.
   - **Guardar en Biblioteca**: Crea una nueva playlist directamente en tu cuenta de Spotify con un solo clic.
 - **Estado Persistente**: Tu sesión, datos del clima y canciones generadas sobreviven a recargas de página gracias a la persistencia en local storage.
-- **Interfaz Hermosa**: Sistema de diseño "Glassmorphism" (vidrio esmerilado) usando Tailwind CSS.
+- **Perfil de Usuario Interactivo**: Menú desplegable con efecto glassmorphism para gestionar tu sesión y acceder rápidamente a tu perfil de Spotify.
+- **Footer Sticky**: Pie de página profesional que se adapta dinámicamente al contenido, siempre visible o al final de la página según corresponda.
+- **Interfaz Hermosa**: Sistema de diseño "Glassmorphism" (vidrio esmerilado) usando Tailwind CSS, con fondos animados tipo Aurora.
 
 ## 🛠️ Stack Tecnológico
 
@@ -25,7 +26,6 @@ SonicMood es una **aplicación de descubrimiento musical basada en el clima**, c
 - **APIs**: 
   - [Spotify Web API](https://developer.spotify.com/) (Auth & Search)
   - [OpenWeatherMap API](https://openweathermap.org/) (Datos del clima)
-  - Browser Geolocation API
 
 ## 🚀 Comenzando
 
