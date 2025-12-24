@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { GithubLogo, LinkedinLogo, Heart, SpotifyLogo, CloudSun } from 'phosphor-react';
 
 /**
