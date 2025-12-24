@@ -21,4 +21,5 @@ export interface Track {
         images: { url: string }[]
     }
     uri: string
+    preview_url: string | null
 }

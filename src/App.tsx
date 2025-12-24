@@ -7,7 +7,8 @@ import { redirectToAuthCodeFlow, getAccessToken } from './utils/auth'
 import { AuroraBackground } from './components/ui/AuroraBackground'
 import { getGenresByWeather } from './utils/moodMap'
 import { getWeatherEmoji } from './utils/iconHelpers'
-import { SpotifyLogo, MusicNotes, Playlist, MagnifyingGlass, PlayCircle, CloudFog, SignOut, X, CaretDown } from 'phosphor-react'
+import { SpotifyLogo, MusicNotes, Playlist, MagnifyingGlass, CloudFog, SignOut, X, CaretDown } from 'phosphor-react'
+import { TrackCard } from './components/ui/TrackCard'
 
 // Load clientId from environment variables for security
 const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
@@ -546,18 +547,7 @@ function App() {
                 {tracks && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mt-8">
                     {tracks.map(track => (
-                      <div key={track.id} className="group relative flex flex-col cursor-pointer" onClick={() => window.open(track.uri, '_blank')}>
-                        <div className="relative aspect-square overflow-hidden rounded-xl shadow-lg mb-3">
-                          <img src={track.album.images[0]?.url} alt={track.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-                            <PlayCircle size={48} weight="fill" className="text-white drop-shadow-xl transform scale-75 group-hover:scale-100 transition-transform duration-300" />
-                          </div>
-                        </div>
-                        <div className="text-center">
-                          <div className="font-bold text-white text-sm truncate group-hover:text-green-300 transition-colors">{track.name}</div>
-                          <div className="text-xs text-blue-100 truncate opacity-80">{track.artists.map(a => a.name).join(', ')}</div>
-                        </div>
-                      </div>
+                      <TrackCard key={track.id} track={track} />
                     ))}
                   </div>
                 )}
