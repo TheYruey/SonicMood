@@ -20,6 +20,14 @@ export const Footer = () => {
                     >
                         © {new Date().getFullYear()} SonicMood
                     </a>
+
+                    {/* Separator */}
+                    <span className="hidden md:inline text-white/10 mx-2">•</span>
+
+                    {/* Version Tag */}
+                    <span className="text-white/20 text-xs font-mono tracking-wider hover:text-white/40 transition-colors cursor-default" title="Current Build Version">
+                        v1.0.0
+                    </span>
                 </div>
 
                 {/* Center: "Powered by" + Brands Pill */}
