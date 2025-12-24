@@ -1,3 +1,6 @@
+// Use the environment variable if available (Production), otherwise fallback to localhost (Development)
+const REDIRECT_URI = import.meta.env.VITE_SPOTIFY_REDIRECT_URI || "http://127.0.0.1:5173/";
+
 /**
  * Inicia el flujo de autenticación PKCE.
  * Genera un verifier, crea un challenge y redirige al usuario a Spotify para autorizar.
@@ -12,7 +15,7 @@ export async function redirectToAuthCodeFlow(clientId: string) {
     const params = new URLSearchParams();
     params.append("client_id", clientId);
     params.append("response_type", "code");
-    params.append("redirect_uri", "http://127.0.0.1:5173/");
+    params.append("redirect_uri", REDIRECT_URI);
     // Scope actualizado para incluir lectura de top artists (user-top-read)
     params.append("scope", "user-read-private user-read-email playlist-read-private playlist-modify-public playlist-modify-private user-top-read");
     params.append("code_challenge_method", "S256");
@@ -41,7 +44,7 @@ export async function getAccessToken(clientId: string, code: string) {
     params.append("client_id", clientId);
     params.append("grant_type", "authorization_code");
     params.append("code", code);
-    params.append("redirect_uri", "http://127.0.0.1:5173/");
+    params.append("redirect_uri", REDIRECT_URI);
     params.append("code_verifier", verifier);
 
     const result = await fetch("https://accounts.spotify.com/api/token", {
