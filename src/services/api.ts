@@ -86,54 +86,155 @@ export const searchCitiesWithWeather = async (query: string) => {
 }
 
 /**
- * Obtiene recomendaciones de canciones basadas en géneros.
- * NOTA: Usa el endpoint de búsqueda `search` como respaldo robusto ya que `recommendations` puede fallar.
- * @param seed_genres Géneros separados por comas
+ * Obtiene los artistas más escuchados del usuario para usarlos como semillas.
+ * @param token Token de acceso
+ * @returns Lista de IDs de artistas
+ */
+/**
+ * Obtiene los artistas más escuchados del usuario para usarlos como semillas.
+ * @param token Token de acceso
+ * @returns Lista de IDs de artistas (máximo 2)
+ */
+export const getTopArtists = async (token: string): Promise<string[]> => {
+    try {
+        const response = await fetch('https://api.spotify.com/v1/me/top/artists?limit=2', {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        if (!response.ok) return [];
+        const data = await response.json();
+        return data.items.map((artist: any) => artist.id);
+    } catch (e) {
+        console.error("Failed to fetch top artists", e);
+        return [];
+    }
+}
+
+/**
+ * Interfaz para los parámetros de recomendación de Spotify.
+ * Permite definir semillas (artistas, géneros) y objetivos de atributos de audio (energía, valencia, etc.).
+ */
+interface RecommendationParams {
+    seed_artists?: string;
+    seed_genres?: string;
+    min_energy?: number;
+    target_energy?: number;
+    target_valence?: number;
+    target_acousticness?: number;
+    limit?: number;
+    market?: string;
+    [key: string]: any;
+}
+
+/**
+ * Obtiene recomendaciones de canciones usando la API oficial de recomendaciones.
+ * @param params Parámetros para la recomendación (seeds, targets)
  * @param token Token de acceso de Spotify
  * @returns Lista de canciones (tracks)
  */
-export const getRecommendations = async (seed_genres: string, token: string) => {
-    if (!token) {
-        throw new Error("No token provided");
+/**
+ * Obtiene recomendaciones de canciones usan la API oficial.
+ * VERSION ROBUSTA: URL Hardcoded + Fallback interno.
+ */
+/**
+ * Obtiene recomendaciones de canciones usando la API oficial.
+ * VERSIÓN ROBUSTA: Construye la URL manualmente y maneja fallos con un fallback de búsqueda.
+ * 
+ * 1. Prioriza `seed_artists` (Top Artists del usuario).
+ * 2. Si falla o no hay artistas, usa `seed_genres` como respaldo.
+ * 3. Si la API de recomendaciones falla (ej. 404), cambia a la API de búsqueda (`getRecommendationsFallback`).
+ * 
+ * @param params Parámetros de configuración (semillas y target features)
+ * @param token Token de acceso
+ * @returns Lista de canciones recomendadas
+ */
+export const getRecommendations = async (params: RecommendationParams, token: string) => {
+    // 1. Validate Seeds
+    const { seed_artists, seed_genres, target_valence, target_energy, limit } = params;
+
+    // Fallback if no seeds at all
+    if (!seed_artists && !seed_genres) {
+        console.warn("getRecommendations: No seeds provided, falling back to search.");
+        // Use a default genre for fallback if nothing provided
+        return getRecommendationsFallback("pop", token);
     }
 
-    // NOTE: The /recommendations endpoint is deprecated/returned 404 for this client.
-    // We are switching to /search API using the genre filter as a robust fallback.
+    // 2. Construct Params Explicitly
+    const urlParams = new URLSearchParams({
+        limit: (limit || 12).toString(),
+        market: 'US', // Hardcoded market to prevent 404s
+    });
 
+    if (seed_artists) urlParams.append('seed_artists', seed_artists);
+    // Only append seed_genres if we DON'T have artists (exclusive logic to avoid conflicts)
+    // or if we really want to mix. For stability, let's prioritize artists.
+    else if (seed_genres) urlParams.append('seed_genres', seed_genres);
+
+    if (target_valence) urlParams.append('target_valence', target_valence.toString());
+    if (target_energy) urlParams.append('target_energy', target_energy.toString());
+    if (params.target_acousticness) urlParams.append('target_acousticness', params.target_acousticness.toString());
+
+    // 3. HARDCODED URL
+    const finalUrl = `https://api.spotify.com/v1/recommendations?${urlParams.toString()}`;
+    console.log("Fetching Recommendations URL:", finalUrl);
+
+    try {
+        const response = await fetch(finalUrl, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            const errorBody = await response.text();
+            console.error(`Recommendations API Failed: ${response.status}`, errorBody);
+
+            // 4. Fallback Logic
+            // If failed (404/403), trigger the Search API Fallback
+            if (seed_genres || params.seed_genres) {
+                console.warn("Triggering Fallback to Search API...");
+                return getRecommendationsFallback(seed_genres || params.seed_genres || "pop", token);
+            }
+            return [];
+        }
+
+        const data = await response.json();
+        return data.tracks || [];
+
+    } catch (error) {
+        console.error("Network error in getRecommendations:", error);
+        // Fallback on network error too
+        return getRecommendationsFallback(seed_genres || "pop", token);
+    }
+}
+
+/**
+ * Fallback: Obtiene canciones usando la API de búsqueda (Search API).
+ * Se usa cuando la API de recomendaciones falla o no devuelve resultados.
+ * Selecciona un género aleatorio de la lista de semillas y busca canciones de ese género.
+ * 
+ * @param seed_genres Géneros separados por comas
+ * @param token Token de acceso
+ * @returns Lista de canciones encontradas (mezcladas aleatoriamente)
+ */
+const getRecommendationsFallback = async (seed_genres: string, token: string) => {
     const genres = seed_genres.split(',');
-    // Pick one random genre to ensure valid search results (searching multiple genres with OR is tricky)
-    // and to provide variety on each sync.
     const selectedGenre = genres[Math.floor(Math.random() * genres.length)].trim();
-
-    console.log(`Using Search API Fallback for genre: ${selectedGenre}`);
 
     const params = new URLSearchParams({
         q: `genre:${selectedGenre}`,
         type: 'track',
-        limit: '20' // Get more tracks to shuffle client-side if needed, though simple limit is fine
+        limit: '12'
     });
 
-    const url = `https://api.spotify.com/v1/search?${params.toString()}`;
-
-    const response = await fetch(url, {
-        headers: {
-            Authorization: `Bearer ${token}`
-        }
+    const response = await fetch(`https://api.spotify.com/v1/search?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` }
     });
 
-    if (!response.ok) {
-        const text = await response.text();
-        console.error("Search API Failed:", response.status, text);
-        throw new Error(`Spotify Search Error ${response.status}: ${text}`);
-    }
-
+    if (!response.ok) return [];
     const data = await response.json();
-
-    // Search API returns { tracks: { items: [...] } }
-    // We map it to match the expected format (array of tracks)
-    // Also shuffling the results slightly to avoid always showing top 3 popular ones
-    const items = data.tracks?.items || [];
-    return items.sort(() => Math.random() - 0.5).slice(0, 12);
+    return (data.tracks?.items || []).sort(() => Math.random() - 0.5);
 }
 
 /**

@@ -2,30 +2,37 @@
 
 SonicMood es una **aplicación de descubrimiento musical basada en el clima**, construida con React, TypeScript y Vite. Conecta la "vibra" atmosférica de tu ubicación actual (o de cualquier ciudad del mundo) con la biblioteca de Spotify para generar la playlist perfecta para el momento.
 
-![SonicMood Banner](public/banner.png)
+![SonicMood Screenshot](public/screenshot.png)
 
 ## ✨ Características
 
 - **Sol & Lluvia, Ritmo y Beat**: Obtiene automáticamente el clima local usando OpenWeatherMap y lo mapea a géneros musicales específicos (ej: *Lluvia + Noche = Jazz/Piano*, *Despejado + Día = Pop/Upbeat*).
-- **Modo Teletransporte (Búsqueda)**: ¿No te gusta el clima de donde estás? Escribe el nombre de cualquier ciudad (ej: "Tokyo", "Paris") para experimentar la vibra de otro lugar.
+- **Personalización Inteligente** 🧠: Utiliza tus **Top Artists** de Spotify como semillas para las recomendaciones, asegurando que la música sugerida se alinee con tus gustos personales.
+- **Motor de Recomendación Robusto**: Sistema de fallbacks inteligente que combina `seed_artists`, `seed_genres` y una búsqueda de respaldo para garantizar que siempre recibas música, incluso si la API de recomendaciones falla.
+- **Modo Teletransporte (Búsqueda)**: ¿No te gusta el clima de donde estás? Escribe el nombre de cualquier ciudad (ej: "Tokyo", "Paris") para experimentar la vibra de otro lugar con autocompletado inteligente.
+- **Shuffle Vibe** 🔀: ¿No te convencen las canciones? Baraja las recomendaciones manteniendo la misma atmósfera climática.
 - **Integración Fluida con Spotify**:
   - Flujo de autenticación **PKCE** seguro (sin exponer secretos del cliente).
-  - Busca canciones relevantes usando la API de Spotify.
+  - Previsualización de audio (30s) directamente desde las tarjetas de canciones.
   - **Guardar en Biblioteca**: Crea una nueva playlist directamente en tu cuenta de Spotify con un solo clic.
-- **Estado Persistente**: Tu sesión, datos del clima y canciones generadas sobreviven a recargas de página gracias a la persistencia en local storage.
-- **Perfil de Usuario Interactivo**: Menú desplegable con efecto glassmorphism para gestionar tu sesión y acceder rápidamente a tu perfil de Spotify.
-- **Footer Sticky**: Pie de página profesional que se adapta dinámicamente al contenido, siempre visible o al final de la página según corresponda.
-- **Interfaz Hermosa**: Sistema de diseño "Glassmorphism" (vidrio esmerilado) usando Tailwind CSS, con fondos animados tipo Aurora.
+- **Experiencia Visual Inmersiva**:
+  - Fondo animado con orbes de colores y efecto aurora.
+  - Textos dinámicos con efecto de máquina de escribir.
+  - Interfaz "Glassmorphism" pulida y moderna.
+- **Estado Persistente**: Tu sesión, datos del clima y canciones generadas sobreviven a recargas de página.
 
 ## 🛠️ Stack Tecnológico
 
 - **Frontend**: React 18, TypeScript, Vite
 - **Estilos**: Tailwind CSS (compatible v4), Headless UI
 - **Gestión de Estado**: Zustand (con Middleware de Persistencia)
-- **Iconos**: Phosphor React
+- **Componentes UI**:
+  - Tarjetas con efecto de vidrio (GlassCard)
+  - Typewriter Effects (Textos dinámicos)
+  - Animated Backgrounds (Blobs CSS animados)
 - **APIs**: 
-  - [Spotify Web API](https://developer.spotify.com/) (Auth & Search)
-  - [OpenWeatherMap API](https://openweathermap.org/) (Datos del clima)
+  - [Spotify Web API](https://developer.spotify.com/) (Auth, User Top, Recommendations, Playlists)
+  - [OpenWeatherMap API](https://openweathermap.org/) (Datos del clima y Geocoding)
 
 ## 🚀 Comenzando
 
@@ -66,13 +73,13 @@ Necesitas claves de API (API Keys) para:
 
 ## 📂 Estructura del Proyecto
 
-- `src/services/api.ts`: Maneja todas las llamadas a API (Spotify y Clima). Incluye la lógica de "Fallback de API de Búsqueda" para evitar endpoints obsoletos.
+- `src/services/api.ts`: Maneja todas las llamadas a API. Incluye lógica avanzada de recomendación y obtención de top artists.
 - `src/store/useStore.ts`: Gestión de estado global con Zustand.
-- `src/utils/auth.ts`: Ayudantes de Autenticación PKCE (Generación de Verifier/Challenge).
-- `src/utils/moodMap.ts`: Lógica de mapeo de condiciones climáticas a géneros.
-- `src/components/ui/GlassCard.tsx`: Componente de UI reutilizable con efecto de vidrio.
-- `src/components/ui/Footer.tsx`: Pie de página responsive con efectos visuales y enlaces sociales.
-- `src/components/ui/AuroraBackground.tsx`: Fondo animado con efecto Aurora Borealis.
+- `src/utils/auth.ts`: Auth PKCE (Scope actualizado: `user-top-read`).
+- `src/utils/moodMap.ts`: Lógica de mapeo clima -> audio features / géneros.
+- `src/components/ui/TrackCard.tsx`: Tarjeta de canción con reproducción de preview.
+- `src/components/ui/AnimatedBackground.tsx`: Fondo ambiental dinámico.
+- `src/components/ui/TypewriterText.tsx`: Componentes de texto animado.
 
 ## 🤝 Contribuciones
 

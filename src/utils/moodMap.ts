@@ -8,19 +8,19 @@ export const getGenresByWeather = (condition: string, timeOfDay: 'day' | 'night'
     const weather = condition.toLowerCase()
 
     if (weather.includes('rain') || weather.includes('drizzle') || weather.includes('thunderstorm')) {
-        return "acoustic,piano,chill"
+        return "acoustic,piano,ambient"
     }
 
     if (weather.includes('clear')) {
-        return timeOfDay === 'day' ? "pop,summer,road-trip" : "club,dance,synth-pop"
+        return timeOfDay === 'day' ? "pop,happy,summer" : "dance,electronic,house"
     }
 
     if (weather.includes('clouds') || weather.includes('atmosphere') || weather.includes('mist') || weather.includes('fog')) {
-        return "indie,alt-rock"
+        return "indie,alternative,singer-songwriter"
     }
 
     if (weather.includes('snow')) {
-        return "classical,holidays"
+        return "classical,chill"
     }
 
     return "pop"

@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { PlayCircle, SpeakerHigh } from 'phosphor-react';
 
+// Interfaz que define la estructura de una canción (Track) de Spotify
 interface Track {
     id: string;
     name: string;
@@ -16,6 +17,12 @@ interface TrackCardProps {
     track: Track;
 }
 
+/**
+ * Componente de tarjeta para mostrar una canción.
+ * - Muestra carátula, nombre y artista.
+ * - Permite previsualizar el audio (si está disponible) al pasar el mouse.
+ * - Abre la canción en Spotify al hacer click.
+ */
 export function TrackCard({ track }: TrackCardProps) {
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);

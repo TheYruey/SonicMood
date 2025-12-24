@@ -2,12 +2,16 @@ import { useRef, useEffect, useState } from 'react'
 import { GlassCard } from './components/ui/GlassCard'
 import { Footer } from './components/ui/Footer'
 import { useStore } from './store/useStore'
-import { getWeather, getWeatherByCity, getRecommendations, getCurrentUserProfile, createPlaylist, addTracksToPlaylist, searchCitiesWithWeather } from './services/api'
+import { getWeather, getWeatherByCity, getRecommendations, getTopArtists, getCurrentUserProfile, createPlaylist, addTracksToPlaylist, searchCitiesWithWeather } from './services/api'
 import { redirectToAuthCodeFlow, getAccessToken } from './utils/auth'
-import { AuroraBackground } from './components/ui/AuroraBackground'
+import { AnimatedBackground } from './components/ui/AnimatedBackground'
+import { TypewriterText } from './components/ui/TypewriterText'
+import { TypewriterTagline } from './components/ui/TypewriterTagline'
+
+
 import { getGenresByWeather } from './utils/moodMap'
 import { getWeatherEmoji } from './utils/iconHelpers'
-import { SpotifyLogo, MusicNotes, Playlist, MagnifyingGlass, CloudFog, SignOut, X, CaretDown } from 'phosphor-react'
+import { SpotifyLogo, MusicNotes, Playlist, MagnifyingGlass, CloudFog, SignOut, X, CaretDown, ArrowsClockwise } from 'phosphor-react'
 import { TrackCard } from './components/ui/TrackCard'
 
 // Load clientId from environment variables for security
@@ -24,6 +28,7 @@ interface UserProfile {
   images: { url: string }[];
   id: string;
   external_urls: { spotify: string };
+  country?: string;
 }
 
 // Componente principal de la aplicación
@@ -120,6 +125,81 @@ function App() {
   }, [cityInput]);
 
   /**
+   * Helper para mapear el clima a atributos de audio objetivos de Spotify.
+   * Define qué tan enérgica, feliz (valence) o acústica debe ser la música.
+   */
+  const getAudioFeatures = (condition: string, isDay: boolean) => {
+    let targets: any = {};
+    const lowerCondition = condition.toLowerCase();
+
+    if (lowerCondition.includes('clear') || lowerCondition.includes('sun')) {
+      targets = { target_valence: 0.8, target_energy: 0.7 };
+    } else if (lowerCondition.includes('rain') || lowerCondition.includes('drizzle')) {
+      targets = { target_valence: 0.3, target_energy: 0.4, target_acousticness: 0.7 };
+    } else if (lowerCondition.includes('cloud')) {
+      targets = { target_valence: 0.5, target_energy: 0.5 };
+    } else if (lowerCondition.includes('snow')) {
+      targets = { target_valence: 0.6, target_energy: 0.3 };
+    } else if (lowerCondition.includes('thunder')) {
+      targets = { target_valence: 0.2, target_energy: 0.8 };
+    } else {
+      // Default / Mist / Fog etc
+      targets = { target_valence: 0.5, target_energy: 0.5 };
+    }
+
+    // Night time adjustment: lower energy
+    if (!isDay) {
+      targets.target_energy = Math.max(0.1, (targets.target_energy || 0.5) - 0.2);
+    }
+
+    return targets;
+  }
+
+  /**
+   * Lógica centralizada para obtener canciones.
+   * 1. Obtiene semillas (Top Artists) si están disponibles.
+   * 2. Calcula los atributos de audio objetivos (Targets) según el clima.
+   * 3. Llama a la API de recomendaciones con los parámetros calculados.
+   */
+  const fetchTracks = async (condition: string, isDay: boolean) => {
+    if (!token) return;
+
+    try {
+      // 1. Get Seeds (Top Artists)
+      const topArtistIds = await getTopArtists(token);
+
+      // 2. Define Targets
+      const targets = getAudioFeatures(condition, isDay);
+
+      // 3. Fallback Genres if no artists or just safely mix them in if needed, 
+      // but API usually takes one or the other or both. 
+      // Requirement: "If user has no top artists... fallback to generic seed_genres"
+
+      // We always get a fallback genre just in case
+      const fallbackGenres = getGenresByWeather(condition, isDay ? 'day' : 'night'); // Returns comma separated string
+
+      let params: any = {
+        ...targets,
+        seed_genres: fallbackGenres, // Always include for fallback support
+        market: user?.country || 'US'
+      };
+
+      if (topArtistIds.length > 0) {
+        params.seed_artists = topArtistIds.join(',');
+      }
+
+      console.log("Fetching recommendations with:", params);
+
+      const recTracks = await getRecommendations(params, token);
+      setTracks(recTracks);
+
+    } catch (error) {
+      console.error("Error fetching tracks:", error);
+      alert("Could not fetch recommendations.");
+    }
+  }
+
+  /**
    * Maneja la selección de una sugerencia de ciudad.
    * 1. Obtiene el clima de las coordenadas seleccionadas.
    * 2. Determina el estado de ánimo (mood) basado en el clima.
@@ -147,12 +227,8 @@ function App() {
         isDay: isDay
       });
 
-      // 2. Determine Mood
-      const seedGenres = getGenresByWeather(condition, isDay ? 'day' : 'night');
-
-      // 3. Get Recommendations
-      const recTracks = await getRecommendations(seedGenres, token || "");
-      setTracks(recTracks);
+      // 2. Fetch Tracks
+      await fetchTracks(condition, isDay);
 
     } catch (error) {
       console.error("Error selecting city:", error);
@@ -189,12 +265,8 @@ function App() {
         isDay: isDay
       })
 
-      // 2. Determine Mood
-      const seedGenres = getGenresByWeather(condition, isDay ? 'day' : 'night')
-
-      // 3. Get Recommendations
-      const recTracks = await getRecommendations(seedGenres, token)
-      setTracks(recTracks)
+      // 2. Fetch Tracks
+      await fetchTracks(condition, isDay);
 
       // Clear input on success
       setCityInput("")
@@ -247,12 +319,8 @@ function App() {
 
         setCityInput('') // Clear search input when syncing GPS
 
-        // 2. Determine Mood
-        const seedGenres = getGenresByWeather(condition, isDay ? 'day' : 'night')
-
-        // 3. Get Recommendations
-        const recTracks = await getRecommendations(seedGenres, token)
-        setTracks(recTracks)
+        // 2. Fetch Tracks
+        await fetchTracks(condition, isDay);
 
       } catch (error) {
         console.error("Error syncing vibe:", error)
@@ -265,6 +333,24 @@ function App() {
       alert("Unable to retrieve location.")
       setLoading(false)
     })
+  }
+
+  /**
+   * "Baraja" (Shuffle) las canciones manteniendo el mismo "vibe".
+   * Simplemente vuelve a llamar a la API con los mismos parámetros para obtener resultados nuevos.
+   */
+  const handleShuffle = async () => {
+    if (!token || !weather) return;
+    setLoading(true);
+    try {
+      // Just re-fetching with the same params usually yields different results from Spotify
+      // especially with our random sorting in fallback and dynamic seeds if we were rotating them (we aren't yet but API is random enough)
+      await fetchTracks(weather.condition, weather.isDay);
+    } catch (e) {
+      console.error("Shuffle failed", e);
+    } finally {
+      setLoading(false);
+    }
   }
 
   /**
@@ -303,14 +389,16 @@ function App() {
   }
 
   return (
-    <div className="relative z-10 min-h-screen flex flex-col">
-      <AuroraBackground />
+    <div className="relative z-10 min-h-screen flex flex-col text-white font-sans selection:bg-cyan-500/30">
+      <div className="fixed inset-0 w-full h-full -z-20">
+        <AnimatedBackground />
+      </div>
       <main className="flex-1 flex flex-col items-center justify-center p-4 md:p-8">
 
         {!token ? (
           // Unified Login View
-          <div className="w-full max-w-md">
-            <GlassCard className="flex flex-col items-center justify-center py-16 px-8 text-center space-y-8 relative overflow-hidden">
+          <div className="w-full max-w-md relative">
+            <GlassCard className="flex flex-col items-center justify-center py-12 px-12 text-center space-y-8 relative overflow-hidden bg-slate-900/30 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-400 to-blue-500"></div>
 
               <div className="space-y-4">
@@ -320,14 +408,22 @@ function App() {
                     SonicMood
                   </h1>
                 </div>
-                <p className="text-xl text-gray-300 font-medium">
-                  Discover music that matches your atmosphere.
-                </p>
+                <div className="text-xl text-gray-300 font-light h-16 md:h-auto flex flex-col md:block items-center justify-center">
+                  <span>Discover music for </span>
+                  <TypewriterTagline
+                    phrases={[
+                      "rainy days 🌧️",
+                      "late night drives 🌃",
+                      "sunny mornings ☀️",
+                      "your atmosphere 🎧"
+                    ]}
+                  />
+                </div>
               </div>
 
               <button
                 onClick={handleLogin}
-                className="w-full bg-[#1DB954] hover:bg-[#1ed760] text-white px-10 py-4 rounded-full font-bold text-lg transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-green-500/30 flex items-center justify-center gap-3"
+                className="w-full bg-[#1DB954] hover:bg-[#1ed760] text-white px-10 py-4 rounded-full font-bold text-lg tracking-wide transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-green-500/20 hover:shadow-green-500/40 duration-300 flex items-center justify-center gap-3"
               >
                 <SpotifyLogo size={28} weight="fill" />
                 Connect Spotify
@@ -337,7 +433,7 @@ function App() {
         ) : (
           // Dashboard View
           <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-8 relative">
-            <GlassCard className="col-span-1 md:col-span-2 text-center relative z-50 overflow-visible">
+            <GlassCard className="col-span-1 md:col-span-2 text-center relative z-50 overflow-visible bg-slate-900/30 backdrop-blur-xl border-white/10">
               <div className="absolute top-3 right-3 md:top-6 md:right-6 flex items-center gap-3 md:gap-4 z-[100]" ref={menuRef}>
                 {user ? (
                   <div className="relative">
@@ -357,29 +453,40 @@ function App() {
                     </button>
 
                     {isMenuOpen && (
-                      <div className="absolute top-full right-0 mt-2 w-56 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden z-[100] transform origin-top-right animate-in fade-in zoom-in-95 duration-200">
-                        <div className="flex flex-col">
-                          <a
-                            href={user.external_urls?.spotify || '#'}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-3 px-4 py-3 text-sm text-white/80 hover:bg-white/10 hover:text-white transition-colors w-full text-left"
-                            onClick={() => setIsMenuOpen(false)}
-                          >
-                            <SpotifyLogo size={18} className="text-[#1DB954]" />
-                            Open in Spotify
-                          </a>
+                      <div className="absolute top-full right-0 mt-2 w-56 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden z-[100] transform origin-top-right animate-in fade-in zoom-in-95 duration-200 ring-1 ring-black/5">
 
-                          <div className="h-px bg-white/10 mx-2 my-1"></div>
+                        {/* Option 1: Spotify Profile */}
+                        <a
+                          href={user.external_urls?.spotify || '#'}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="group flex items-center gap-3 px-4 py-3.5 text-sm font-medium text-slate-200 hover:text-white hover:bg-[#1DB954]/10 transition-all duration-200"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <SpotifyLogo
+                            size={20}
+                            weight="duotone"
+                            className="text-[#1DB954] group-hover:scale-110 group-hover:drop-shadow-[0_0_5px_rgba(29,185,84,0.5)] transition-transform duration-300"
+                          />
+                          <span>Open in Spotify</span>
+                        </a>
 
-                          <button
-                            onClick={handleLogout}
-                            className="flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors w-full text-left"
-                          >
-                            <SignOut size={18} />
-                            Log Out
-                          </button>
-                        </div>
+                        {/* Elegant Separator */}
+                        <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mx-2 my-1"></div>
+
+                        {/* Option 2: Logout */}
+                        <button
+                          onClick={handleLogout}
+                          className="group flex items-center gap-3 px-4 py-3.5 text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all duration-200 w-full text-left"
+                        >
+                          <SignOut
+                            size={20}
+                            weight="bold"
+                            className="group-hover:-translate-x-1 transition-transform duration-300"
+                          />
+                          <span>Log Out</span>
+                        </button>
+
                       </div>
                     )}
                   </div>
@@ -401,9 +508,14 @@ function App() {
                     SonicMood
                   </h1>
                 </div>
-                <p className="text-lg font-light text-white/70 tracking-wide">
-                  Music discovery driven by your atmosphere.
-                </p>
+                <TypewriterText
+                  phrases={[
+                    "tuned to local weather.",
+                    "driven by your atmosphere.",
+                    "curated for right now.",
+                    "vibe check: active."
+                  ]}
+                />
               </div>
 
               <div className="flex flex-col items-center gap-4 w-full">
@@ -488,13 +600,34 @@ function App() {
             </GlassCard>
 
             {weather && (
-              <GlassCard className="col-span-1 md:col-span-2 relative z-0">
+              <GlassCard className="col-span-1 md:col-span-2 relative z-0 bg-slate-900/40 backdrop-blur-md border-white/10">
 
                 <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 mb-8">
                   {/* Left: Location & Date */}
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-sm font-medium text-purple-300 tracking-wider uppercase">Current Vibe</span>
+                      {tracks && (
+                        <button
+                          onClick={handleShuffle}
+                          disabled={isLoading}
+                          className="group relative p-3 md:px-5 md:py-2.5 rounded-full bg-gradient-to-br from-white/10 to-white/5 hover:from-white/20 hover:to-white/10 backdrop-blur-xl border border-white/20 hover:border-cyan-300/50 shadow-lg hover:shadow-cyan-500/20 active:scale-95 transition-all duration-300 ease-out flex items-center gap-3 disabled:opacity-50 disabled:pointer-events-none ml-4"
+                          title="Shuffle Vibe"
+                        >
+                          <ArrowsClockwise
+                            size={20}
+                            weight="duotone"
+                            className={`text-white/80 group-hover:text-cyan-300 transition-colors ${isLoading ? 'animate-spin' : ''}`}
+                          />
+                          {/* Text Label - Visible only on Desktop */}
+                          <span className="hidden md:block text-sm font-semibold text-white/90 group-hover:text-white tracking-wide">
+                            Shuffle Vibe
+                          </span>
+
+                          {/* Subtle internal shine effect */}
+                          <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        </button>
+                      )}
                     </div>
                     <h2 className="text-4xl font-bold text-white leading-tight flex items-center gap-3">
                       {weather.city}, <span className="text-white/50">{weather.country}</span>
