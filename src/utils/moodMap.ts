@@ -1,3 +1,9 @@
+/**
+ * Mapea las condiciones del clima y la hora del día a géneros musicales de Spotify.
+ * @param condition Descripción del clima (ej: "Clear", "Rain")
+ * @param timeOfDay 'day' o 'night'
+ * @returns Cadena de géneros separados por comas para la API de Spotify
+ */
 export const getGenresByWeather = (condition: string, timeOfDay: 'day' | 'night'): string => {
     const weather = condition.toLowerCase()
 

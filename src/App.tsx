@@ -17,6 +17,7 @@ if (!clientId) {
 }
 
 
+// Interfaz para el perfil de usuario de Spotify
 interface UserProfile {
   display_name: string;
   images: { url: string }[];
@@ -24,6 +25,7 @@ interface UserProfile {
   external_urls: { spotify: string };
 }
 
+// Componente principal de la aplicación
 function App() {
 
   const { weather, token, setToken, setWeather, setTracks, setLoading, isLoading, tracks, logout } = useStore()
@@ -37,6 +39,7 @@ function App() {
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close menu when clicking outside
+  // Cierra el menú desplegable al hacer clic fuera de él
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -51,6 +54,7 @@ function App() {
 
 
 
+  // Efecto para manejar el intercambio de código de autenticación de Spotify
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
@@ -87,7 +91,7 @@ function App() {
     }
   }, [token]);
 
-  // Debounce Search Logic
+  // Lógica de búsqueda con Debounce (espera a que el usuario termine de escribir)
   // Debounce Search Logic
   useEffect(() => {
     // If input change is due to selection, don't search
@@ -114,6 +118,12 @@ function App() {
     return () => clearTimeout(delayDebounceFn);
   }, [cityInput]);
 
+  /**
+   * Maneja la selección de una sugerencia de ciudad.
+   * 1. Obtiene el clima de las coordenadas seleccionadas.
+   * 2. Determina el estado de ánimo (mood) basado en el clima.
+   * 3. Obtiene recomendaciones de Spotify.
+   */
   const handleSelectSuggestion = async (data: any) => {
     isSelecting.current = true;
     setCityInput(`${data.name}, ${data.country}`);
@@ -155,6 +165,10 @@ function App() {
     redirectToAuthCodeFlow(clientId);
   }
 
+  /**
+   * Maneja la búsqueda manual por texto (Enter o clic en lupa).
+   * Similar a handleSelectSuggestion pero busca primero el clima por el nombre de ciudad.
+   */
   const handleManualSearch = async () => {
     if (!token || !cityInput.trim()) return
     setLoading(true)
@@ -199,6 +213,9 @@ function App() {
     }
   }
 
+  /**
+   * Sincroniza la "vibra" usando la ubicación GPS del dispositivo.
+   */
   const handleSync = () => {
     if (!token) return
     setLoading(true)
@@ -249,6 +266,9 @@ function App() {
     })
   }
 
+  /**
+   * Guarda las canciones recomendadas actuales en una nueva playlist de Spotify.
+   */
   const handleSavePlaylist = async () => {
     if (!token || !tracks || !weather) return;
 

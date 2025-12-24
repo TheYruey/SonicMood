@@ -1,3 +1,9 @@
+/**
+ * Determina el gradiente de fondo basado en el clima y la hora del día.
+ * @param condition Descripción del clima
+ * @param isDay true si es de día, false si es de noche
+ * @returns Clases de Tailwind CSS para el gradiente
+ */
 export const getGradientByWeather = (condition: string, isDay: boolean): string => {
     const lowerCondition = condition.toLowerCase();
 

@@ -1,5 +1,9 @@
 
 
+/**
+ * Componente de fondo animado con efectos de luces tipo Aurora Boreal.
+ * Utiliza orbes de colores con desenfoque y animación.
+ */
 export const AuroraBackground = () => {
     return (
         <div className="fixed inset-0 w-full h-full bg-slate-950 overflow-hidden -z-10">

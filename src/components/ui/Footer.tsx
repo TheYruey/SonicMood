@@ -1,6 +1,10 @@
 import React from 'react';
 import { GithubLogo, LinkedinLogo, Heart, SpotifyLogo, CloudSun } from 'phosphor-react';
 
+/**
+ * Pie de página de la aplicación.
+ * Muestra créditos, enlaces a redes sociales y atribuciones a las APIs usadas.
+ */
 export const Footer = () => {
     return (
         <footer className="w-full py-8 mt-auto border-t border-white/10 bg-black/40 backdrop-blur-2xl shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.5)] z-50">

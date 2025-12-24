@@ -11,6 +11,10 @@ interface GlassCardProps extends HTMLMotionProps<"div"> {
     children: React.ReactNode
 }
 
+/**
+ * Componente de tarjeta con efecto de "Glassmorphism" (vidrio esmerilado).
+ * Incluye animaciones de entrada usando Framer Motion.
+ */
 export const GlassCard = ({ className, children, ...props }: GlassCardProps) => {
     return (
         <motion.div

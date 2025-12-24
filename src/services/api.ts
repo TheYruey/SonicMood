@@ -1,13 +1,21 @@
 import axios from 'axios'
 
+// Instancia de Axios para la API de Spotify
 export const spotifyApi = axios.create({
     baseURL: 'https://api.spotify.com/v1',
 })
 
+// Instancia de Axios para la API de clima (OpenWeatherMap)
 export const weatherApi = axios.create({
     baseURL: 'https://api.openweathermap.org/data/2.5',
 })
 
+/**
+ * Obtiene el clima actual basado en coordenadas geográficas.
+ * @param lat Latitud
+ * @param lon Longitud
+ * @returns Datos del clima en formato JSON
+ */
 export const getWeather = async (lat: number, lon: number) => {
     const response = await weatherApi.get(`/weather`, {
         params: {
@@ -20,6 +28,11 @@ export const getWeather = async (lat: number, lon: number) => {
     return response.data
 }
 
+/**
+ * Obtiene el clima actual buscando por nombre de ciudad.
+ * @param city Nombre de la ciudad
+ * @returns Datos del clima
+ */
 export const getWeatherByCity = async (city: string) => {
     const response = await weatherApi.get(`/weather`, {
         params: {
@@ -31,6 +44,14 @@ export const getWeatherByCity = async (city: string) => {
     return response.data
 }
 
+/**
+ * Busca ciudades por nombre y obtiene su clima actual.
+ * Realiza dos pasos:
+ * 1. Busca coordenadas usando Geo API.
+ * 2. Obtiene el clima para cada ubicación encontrada.
+ * @param query Nombre de la ciudad a buscar
+ * @returns Lista de ciudades con su clima y coordenadas
+ */
 export const searchCitiesWithWeather = async (query: string) => {
     // 1. Fetch Locations from Geo API
     const geoResponse = await axios.get(`http://api.openweathermap.org/geo/1.0/direct`, {
@@ -64,6 +85,13 @@ export const searchCitiesWithWeather = async (query: string) => {
     return results.filter(item => item !== null);
 }
 
+/**
+ * Obtiene recomendaciones de canciones basadas en géneros.
+ * NOTA: Usa el endpoint de búsqueda `search` como respaldo robusto ya que `recommendations` puede fallar.
+ * @param seed_genres Géneros separados por comas
+ * @param token Token de acceso de Spotify
+ * @returns Lista de canciones (tracks)
+ */
 export const getRecommendations = async (seed_genres: string, token: string) => {
     if (!token) {
         throw new Error("No token provided");
@@ -108,6 +136,11 @@ export const getRecommendations = async (seed_genres: string, token: string) => 
     return items.sort(() => Math.random() - 0.5).slice(0, 12);
 }
 
+/**
+ * Obtiene el perfil del usuario actual de Spotify.
+ * @param token Token de acceso
+ * @returns Objeto con datos del usuario
+ */
 export const getCurrentUserProfile = async (token: string) => {
     const response = await fetch("https://api.spotify.com/v1/me", {
         headers: { Authorization: `Bearer ${token}` }
@@ -116,6 +149,13 @@ export const getCurrentUserProfile = async (token: string) => {
     return response.json();
 }
 
+/**
+ * Crea una nueva playlist en la cuenta del usuario.
+ * @param userId ID del usuario de Spotify
+ * @param name Nombre de la playlist
+ * @param token Token de acceso
+ * @returns Datos de la playlist creada
+ */
 export const createPlaylist = async (userId: string, name: string, token: string) => {
     const response = await fetch(`https://api.spotify.com/v1/users/${userId}/playlists`, {
         method: "POST",
@@ -133,6 +173,13 @@ export const createPlaylist = async (userId: string, name: string, token: string
     return response.json();
 }
 
+/**
+ * Agrega canciones a una playlist existente.
+ * @param playlistId ID de la playlist
+ * @param uris Lista de URIs de Spotify de las canciones (spotify:track:...)
+ * @param token Token de acceso
+ * @returns Respuesta de la API
+ */
 export const addTracksToPlaylist = async (playlistId: string, uris: string[], token: string) => {
     const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
         method: "POST",

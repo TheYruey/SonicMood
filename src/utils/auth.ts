@@ -1,3 +1,8 @@
+/**
+ * Inicia el flujo de autenticación PKCE.
+ * Genera un verifier, crea un challenge y redirige al usuario a Spotify para autorizar.
+ * @param clientId ID del cliente de Spotify
+ */
 export async function redirectToAuthCodeFlow(clientId: string) {
     const verifier = generateCodeVerifier(128);
     const challenge = await generateCodeChallenge(verifier);
@@ -15,6 +20,13 @@ export async function redirectToAuthCodeFlow(clientId: string) {
     document.location = `https://accounts.spotify.com/authorize?${params.toString()}`;
 }
 
+/**
+ * Intercambia el código de autorización por un token de acceso.
+ * Verifica que el verifier almacenado coincida.
+ * @param clientId ID del cliente de Spotify
+ * @param code Código devuelto por Spotify
+ * @returns Token de acceso (access_token)
+ */
 export async function getAccessToken(clientId: string, code: string) {
     const verifier = localStorage.getItem("verifier");
 
@@ -47,6 +59,11 @@ export async function getAccessToken(clientId: string, code: string) {
     return access_token;
 }
 
+/**
+ * Genera una cadena aleatoria para usar como verificador de código (PKCE).
+ * @param length Longitud de la cadena
+ * @returns Cadena aleatoria
+ */
 function generateCodeVerifier(length: number) {
     let text = '';
     let possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -57,6 +74,11 @@ function generateCodeVerifier(length: number) {
     return text;
 }
 
+/**
+ * Genera el challenge SHA-256 a partir del verifier.
+ * @param codeVerifier El verifier generado
+ * @returns Challenge codificado en base64 URL-safe
+ */
 async function generateCodeChallenge(codeVerifier: string) {
     const data = new TextEncoder().encode(codeVerifier);
     const digest = await window.crypto.subtle.digest('SHA-256', data);

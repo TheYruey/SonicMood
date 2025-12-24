@@ -1,11 +1,14 @@
 import { create } from 'zustand'
 import type { UserProfile, WeatherData, Track } from '../types'
 
+/**
+ * Define el estado global de la aplicación.
+ */
 interface StoreState {
     user: UserProfile | null
     weather: WeatherData | null
     token: string | null
-    tracks: Track[] | null
+    tracks: Track[] | null // Canciones recomendadas actuales
     isLoading: boolean
     setUser: (user: UserProfile | null) => void
     setWeather: (weather: WeatherData | null) => void
@@ -17,6 +20,10 @@ interface StoreState {
 
 import { persist } from 'zustand/middleware'
 
+/**
+ * Hook de Zustand para manejar el estado global.
+ * Utiliza middleware 'persist' para guardar ciertos datos en localStorage.
+ */
 export const useStore = create<StoreState>()(
     persist(
         (set) => ({
