@@ -1,5 +1,6 @@
-// Use the environment variable if available (Production), otherwise fallback to localhost (Development)
-const REDIRECT_URI = import.meta.env.VITE_SPOTIFY_REDIRECT_URI || "http://127.0.0.1:5173/";
+// Production Hardcoded Override (Temporary Fix for INVALID_CLIENT)
+// const REDIRECT_URI = import.meta.env.VITE_SPOTIFY_REDIRECT_URI || "http://127.0.0.1:5173/";
+export const REDIRECT_URI = "https://sonic-mood.vercel.app/callback";
 
 /**
  * Inicia el flujo de autenticación PKCE.
